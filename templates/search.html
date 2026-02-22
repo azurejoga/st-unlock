@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Pesquisar: {{ query }} - {% endblock %}
+
+{% block content %}
+<a href="/" class="back-btn">← Voltar</a>
+<div class="page-title">🔍 Resultados para "{{ query }}"</div>
+
+<div class="games-grid" id="searchResults">
+    <div class="loading">
+        <div class="spinner"></div>
+        <p>Pesquisando jogos...</p>
+    </div>
+</div>
+
+<div id="emptyState" class="empty-state" style="display: none;">
+    <h3>Nenhum jogo encontrado</h3>
+    <p>Tente pesquisar com outros termos</p>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const query = "{{ query }}";
+
+async function loadSearchResults() {
+    try {
+        const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+        const data = await response.json();
+
+        const grid = document.getElementById('searchResults');
+        const emptyState = document.getElementById('emptyState');
+
+        if (data.results && data.results.length > 0) {
+            grid.innerHTML = data.results.map(game => createGameCard(game)).join('');
+        } else {
+            grid.style.display = 'none';
+            emptyState.style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error searching games:', error);
+        document.getElementById('searchResults').innerHTML = `
+            <div class="empty-state">
+                <h3>Erro na pesquisa</h3>
+                <p>Tente novamente mais tarde</p>
+            </div>
+        `;
+    }
+}
+
+function createGameCard(game) {
+    const thumb = game.thumbnail || 'https://via.placeholder.com/300x400/2d2d44/ffffff?text=No+Image';
+    return `
+        <a href="/game/${game.slug}" class="game-card">
+            <img src="${thumb}" alt="${game.title}" onerror="this.src='https://via.placeholder.com/300x400/2d2d44/ffffff?text=No+Image'">
+            <div class="game-card-content">
+                <div class="game-card-title">${game.title}</div>
+            </div>
+        </a>
+    `;
+}
+
+loadSearchResults();
+</script>
+{% endblock %}

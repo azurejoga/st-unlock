@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}SteamUnlocked - {% endblock %}
+
+{% block content %}
+<div class="page-title">🎮 SteamUnlocked API</div>
+<p class="page-subtitle">Pesquise e baixe jogos gratuitamente</p>
+
+<div class="categories-grid" id="categoriesGrid">
+    <div class="loading">
+        <div class="spinner"></div>
+        <p>Carregando categorias...</p>
+    </div>
+</div>
+
+<div class="page-title" style="margin-top: 60px;">🔤 Jogos de A-Z</div>
+<div class="az-grid" id="azGrid">
+    <a href="/games/az?letter=All" class="az-letter">All</a>
+    {% for letter in ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'] %}
+    <a href="/games/az?letter={{ letter }}" class="az-letter">{{ letter }}</a>
+    {% endfor %}
+</div>
+
+<div class="page-title" style="margin-top: 60px;">🔥 Jogos Populares</div>
+<div class="games-grid" id="popularGames">
+    <div class="loading">
+        <div class="spinner"></div>
+        <p>Carregando jogos populares...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+async function loadCategories() {
+    try {
+        const response = await fetch('/api/categories');
+        const data = await response.json();
+
+        const grid = document.getElementById('categoriesGrid');
+        grid.innerHTML = data.categories.map(cat => `
+            <a href="/category/${cat.slug}" class="category-card">${cat.name}</a>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading categories:', error);
+    }
+}
+
+async function loadPopularGames() {
+    try {
+        const response = await fetch('/api/games/az');
+        const data = await response.json();
+
+        const grid = document.getElementById('popularGames');
+        if (data.results && data.results.length > 0) {
+            grid.innerHTML = data.results.slice(0, 12).map(game => createGameCard(game)).join('');
+        }
+    } catch (error) {
+        console.error('Error loading popular games:', error);
+    }
+}
+
+function createGameCard(game) {
+    const thumb = game.thumbnail || 'https://via.placeholder.com/300x400/2d2d44/ffffff?text=No+Image';
+    return `
+        <a href="/game/${game.slug}" class="game-card">
+            <img src="${thumb}" alt="${game.title}" onerror="this.src='https://via.placeholder.com/300x400/2d2d44/ffffff?text=No+Image'">
+            <div class="game-card-content">
+                <div class="game-card-title">${game.title}</div>
+            </div>
+        </a>
+    `;
+}
+
+loadCategories();
+loadPopularGames();
+</script>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}A-Z - {% endblock %}
+
+{% block content %}
+<a href="/" class="back-btn">← Voltar</a>
+<div class="page-title">🔤 Jogos de A-Z {% if letter %}- {{ letter|upper }}{% endif %}</div>
+
+<div class="az-grid" id="azGrid">
+    <a href="/games/az?letter=" class="az-letter {% if not letter %}active{% endif %}">All</a>
+    {% for l in ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'] %}
+    <a href="/games/az?letter={{ l }}" class="az-letter {% if letter == l.lower() %}active{% endif %}">{{ l }}</a>
+    {% endfor %}
+</div>
+
+<div class="games-grid" id="azGames">
+    <div class="loading">
+        <div class="spinner"></div>
+        <p>Carregando jogos...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const letter = "{{ letter }}";
+
+async function loadAZGames() {
+    try {
+        const url = letter ? `/api/games/az?letter=${letter}` : '/api/games/az';
+        const response = await fetch(url);
+        const data = await response.json();
+
+        const grid = document.getElementById('azGames');
+
+        if (data.results && data.results.length > 0) {
+            grid.innerHTML = data.results.map(game => createGameCard(game)).join('');
+        } else {
+            grid.innerHTML = `
+                <div class="empty-state">
+                    <h3>Nenhum jogo encontrado</h3>
+                    <p>Não há jogos começando com esta letra</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading A-Z games:', error);
+    }
+}
+
+function createGameCard(game) {
+    const thumb = game.thumbnail || 'https://via.placeholder.com/300x400/2d2d44/ffffff?text=No+Image';
+    return `
+        <a href="/game/${game.slug}" class="game-card">
+            <img src="${thumb}" alt="${game.title}" onerror="this.src='https://via.placeholder.com/300x400/2d2d44/ffffff?text=No+Image'">
+            <div class="game-card-content">
+                <div class="game-card-title">${game.title}</div>
+            </div>
+        </a>
+    `;
+}
+
+loadAZGames();
+</script>
+{% endblock %}

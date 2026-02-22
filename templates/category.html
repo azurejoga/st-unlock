@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}{{ category|title }} - {% endblock %}
+
+{% block content %}
+<a href="/" class="back-btn">← Voltar</a>
+<div class="page-title">📂 {{ category|title }}</div>
+
+<div class="games-grid" id="categoryGames">
+    <div class="loading">
+        <div class="spinner"></div>
+        <p>Carregando jogos...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const category = "{{ category }}";
+
+async function loadCategoryGames() {
+    try {
+        const response = await fetch(`/api/category/${category}`);
+        const data = await response.json();
+
+        const grid = document.getElementById('categoryGames');
+
+        if (data.results && data.results.length > 0) {
+            grid.innerHTML = data.results.map(game => createGameCard(game)).join('');
+        } else {
+            grid.innerHTML = `
+                <div class="empty-state">
+                    <h3>Nenhum jogo encontrado</h3>
+                    <p>Esta categoria pode não ter jogos ainda</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading category games:', error);
+    }
+}
+
+function createGameCard(game) {
+    const thumb = game.thumbnail || 'https://via.placeholder.com/300x400/2d2d44/ffffff?text=No+Image';
+    return `
+        <a href="/game/${game.slug}" class="game-card">
+            <img src="${thumb}" alt="${game.title}" onerror="this.src='https://via.placeholder.com/300x400/2d2d44/ffffff?text=No+Image'">
+            <div class="game-card-content">
+                <div class="game-card-title">${game.title}</div>
+            </div>
+        </a>
+    `;
+}
+
+loadCategoryGames();
+</script>
+{% endblock %}

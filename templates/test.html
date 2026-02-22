@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SteamUnlocked - Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a2e;
+            color: #fff;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #2d2d44;
+            border-radius: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            background: #eb2d1c;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .results {
+            margin-top: 20px;
+        }
+        .game-card {
+            display: inline-block;
+            width: 200px;
+            margin: 10px;
+            padding: 15px;
+            background: #1a1a2e;
+            border-radius: 10px;
+            vertical-align: top;
+        }
+        .game-card a {
+            color: #fff;
+            text-decoration: none;
+        }
+        .game-card img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎮 SteamUnlocked API - Test Page</h1>
+
+    <div class="test-section">
+        <h2>Teste API Endpoints</h2>
+        <button onclick="testCategories()">1. Test Categories</button>
+        <button onclick="testAZ()">2. Test A-Z Games</button>
+        <button onclick="testSearch('diablo')">3. Test Search (diablo)</button>
+        <button onclick="testCategory('action')">4. Test Category (action)</button>
+    </div>
+
+    <div id="results" class="results"></div>
+
+    <script>
+        function log(msg) {
+            console.log(msg);
+            document.getElementById('results').innerHTML += '<p>' + msg + '</p>';
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function testCategories() {
+            clearResults();
+            log('📂 Testing /api/categories...');
+
+            try {
+                const response = await fetch('/api/categories');
+                const data = await response.json();
+
+                log('✓ Categories loaded: ' + data.categories.length);
+
+                let html = '<div class="test-section"><h3>Categories:</h3><div style="display:flex;flex-wrap:wrap;gap:10px;">';
+                data.categories.forEach(cat => {
+                    html += `<button onclick="testCategory('${cat.slug}')">${cat.name}</button>`;
+                });
+                html += '</div></div>';
+                document.getElementById('results').innerHTML += html;
+
+            } catch (error) {
+                log('✗ Error: ' + error);
+            }
+        }
+
+        async function testAZ() {
+            clearResults();
+            log('🔤 Testing /api/games/az...');
+
+            try {
+                const response = await fetch('/api/games/az');
+                const data = await response.json();
+
+                log('✓ A-Z Games loaded: ' + data.count);
+
+                let html = '<div class="test-section"><h3>Popular Games:</h3><div style="display:flex;flex-wrap:wrap;gap:10px;">';
+                data.results.slice(0, 8).forEach(game => {
+                    html += createGameCard(game);
+                });
+                html += '</div></div>';
+                document.getElementById('results').innerHTML += html;
+
+            } catch (error) {
+                log('✗ Error: ' + error);
+            }
+        }
+
+        async function testSearch(query) {
+            clearResults();
+            log('🔍 Testing /api/search?q=' + query + '...');
+
+            try {
+                const response = await fetch('/api/search?q=' + query);
+                const data = await response.json();
+
+                log('✓ Search results: ' + data.count);
+
+                let html = '<div class="test-section"><h3>Results for "' + query + '":</h3><div style="display:flex;flex-wrap:wrap;gap:10px;">';
+                data.results.forEach(game => {
+                    html += createGameCard(game);
+                });
+                html += '</div></div>';
+                document.getElementById('results').innerHTML += html;
+
+            } catch (error) {
+                log('✗ Error: ' + error);
+            }
+        }
+
+        async function testCategory(category) {
+            clearResults();
+            log('📂 Testing /api/category/' + category + '...');
+
+            try {
+                const response = await fetch('/api/category/' + category);
+                const data = await response.json();
+
+                log('✓ Category games: ' + data.count);
+
+                let html = '<div class="test-section"><h3>' + category.toUpperCase() + ' Games:</h3><div style="display:flex;flex-wrap:wrap;gap:10px;">';
+                data.results.forEach(game => {
+                    html += createGameCard(game);
+                });
+                html += '</div></div>';
+                document.getElementById('results').innerHTML += html;
+
+            } catch (error) {
+                log('✗ Error: ' + error);
+            }
+        }
+
+        function createGameCard(game) {
+            const thumb = game.thumbnail || 'https://via.placeholder.com/200x150/2d2d44/ffffff?text=No+Image';
+            return `
+                <div class="game-card">
+                    <a href="/game/${game.slug}">
+                        <img src="${thumb}" alt="${game.title}" onerror="this.src='https://via.placeholder.com/200x150/2d2d44/ffffff?text=No+Image'">
+                        <div style="margin-top:10px;font-size:14px;">${game.title.substring(0, 30)}...</div>
+                    </a>
+                </div>
+            `;
+        }
+
+        // Auto-load A-Z games on page load
+        window.onload = function() {
+            log('🎮 Page loaded! Click buttons to test endpoints');
+            testAZ();
+        };
+    </script>
+</body>
+</html>
